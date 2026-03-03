@@ -343,28 +343,6 @@ input{font-family:inherit;}
 }
 .toast.on{transform:translateX(-50%) translateY(0);}
 
-/* ─── INSTALL BANNER ─── */
-.install-banner{
-  position:fixed;bottom:calc(80px + var(--safe-b));left:50%;
-  transform:translateX(-50%) translateY(120px);
-  width:calc(100% - 28px);max-width:402px;
-  background:var(--nav);color:#fff;
-  border-radius:18px;padding:14px 16px;
-  display:flex;align-items:center;gap:12px;
-  box-shadow:0 8px 32px rgba(0,0,0,.28);z-index:400;
-  transition:transform .4s cubic-bezier(.34,1.56,.64,1);
-}
-.install-banner.on{transform:translateX(-50%) translateY(0);}
-.install-icon{font-size:28px;flex-shrink:0;}
-.install-text{flex:1;}
-.install-title{font-size:14px;font-weight:700;margin-bottom:2px;}
-.install-sub{font-size:12px;opacity:.7;}
-.install-btn{background:#fff;color:var(--nav);border:none;
-  border-radius:10px;padding:8px 14px;font-size:13px;font-weight:800;
-  flex-shrink:0;transition:opacity .15s;}
-.install-btn:active{opacity:.8;}
-.install-dismiss{background:none;border:none;color:rgba(255,255,255,.5);
-  font-size:20px;padding:2px 4px;flex-shrink:0;line-height:1;}
 </style>
 </head>
 <body>
@@ -505,16 +483,6 @@ input{font-family:inherit;}
   </div>
 </div>
 
-<!-- INSTALL BANNER (Android/Chrome) -->
-<div class="install-banner" id="install-banner">
-  <div class="install-icon">📲</div>
-  <div class="install-text">
-    <div class="install-title" id="ib-title">Nainštalovať aplikáciu</div>
-    <div class="install-sub" id="ib-sub">Pridať na plochu · Funguje offline</div>
-  </div>
-  <button class="install-btn" id="ib-btn" onclick="doInstall()">Inštalovať</button>
-  <button class="install-dismiss" onclick="dismissInstall()">✕</button>
-</div>
 
 <div class="toast" id="toast"></div>
 
@@ -1196,46 +1164,8 @@ if('serviceWorker' in navigator){
   });
 }
 
-// ═══════════════════════════════════════════════════════════
-// PWA — INSTALL BANNER
-// ═══════════════════════════════════════════════════════════
-let _deferredPrompt=null;
-const _IB=document.getElementById('install-banner');
-
-function _updateIBLang(){
-  const en=LANG==='en';
-  document.getElementById('ib-title').textContent=en?'Install App':'Nainštalovať aplikáciu';
-  document.getElementById('ib-sub').textContent=en?'Add to Home Screen · Works offline':'Pridať na plochu · Funguje offline';
-  document.getElementById('ib-btn').textContent=en?'Install':'Inštalovať';
-}
-function showInstallBanner(){if(_deferredPrompt&&_IB)_IB.classList.add('on');}
-function dismissInstall(){if(_IB)_IB.classList.remove('on');_deferredPrompt=null;}
-async function doInstall(){
-  if(!_deferredPrompt)return;
-  _deferredPrompt.prompt();
-  const{outcome}=await _deferredPrompt.userChoice;
-  if(outcome==='accepted'){dismissInstall();toast(LANG==='en'?'✓ App installed!':'✓ Aplikácia nainštalovaná!');}
-  _deferredPrompt=null;
-}
-
-window.addEventListener('beforeinstallprompt',e=>{
-  e.preventDefault();_deferredPrompt=e;
-  _updateIBLang();
-  setTimeout(showInstallBanner,2000);
-});
-
-// Patch setLang to also update install banner text
-// (use addEventListener pattern to avoid hoisting conflicts)
-window.addEventListener('langchange',_updateIBLang);
-const _setLangOrig=setLang;
-window.setLang=function(l){_setLangOrig(l);window.dispatchEvent(new Event('langchange'));};
-
-// iOS Safari hint
-const _isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
-const _isStandalone=window.matchMedia('(display-mode:standalone)').matches||navigator.standalone;
-if(_isIOS&&!_isStandalone){
-  setTimeout(()=>toast(LANG==='en'?'Safari → Share → Add to Home Screen 📱':'Safari → Zdieľať → Pridať na plochu 📱'),3000);
-}
+// suppress browser's default install prompt (no custom banner)
+window.addEventListener('beforeinstallprompt',e=>e.preventDefault());
 </script>
 </body>
 </html>
