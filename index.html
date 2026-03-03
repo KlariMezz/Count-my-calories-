@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="CountMyCalories">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
+<title>CountMyCalories</title>
+<style>
+:root {
+  --bg:#f0f2f5;--card:#fff;--text:#1a1a1a;--muted:#8e8e93;
+  --border:#f0f0f0;--primary:#5b5cf6;--danger:#ef4444;
+  --success:#22c55e;--warn:#f59e0b;
+  --pc:#7c5cbf;--pc-bg:#f3f0ff;
+  --cc:#f5a623;--cc-bg:#fff8ed;
+  --fc:#e8335c;--fc-bg:#fff0f4;
+  --nav:#1c1c2e;
+  --radius:20px;--radius-sm:14px;
+  --shadow:0 1px 8px rgba(0,0,0,.07);
+  --shadow-lg:0 8px 32px rgba(0,0,0,.14);
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--bg);}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;
+  color:var(--text);max-width:430px;margin:0 auto;
+  display:flex;flex-direction:column;
+  height:100vh;height:-webkit-fill-available;overflow:hidden;
+}
+button{font-family:inherit;-webkit-tap-highlight-color:transparent;cursor:pointer;}
+input{font-family:inherit;}
+
+/* ─── TOP BAR ─── */
+.topbar{
+  background:#fff;
+  padding:calc(12px + var(--safe-t)) 20px 14px;
+  display:flex;justify-content:space-between;align-items:flex-end;
+  flex-shrink:0;border-bottom:1px solid var(--border);
+}
+.date-area{}
+.date-small{font-size:12px;color:var(--muted);font-weight:500;margin-bottom:3px;}
+.date-nav{display:flex;align-items:center;gap:8px;}
+.dnav{background:none;border:none;color:var(--muted);font-size:20px;padding:0 2px;
+  display:flex;align-items:center;line-height:1;}
+.dnav:active{color:var(--text);}
+.date-name{font-size:22px;font-weight:800;letter-spacing:-.5px;}
+.topbar-right{display:flex;align-items:center;gap:8px;}
+.lang-pill{
+  display:flex;background:#f0f0f5;border-radius:12px;padding:3px;
+  border:none;gap:2px;
+}
+.lp{background:none;border:none;font-size:11px;font-weight:700;color:var(--muted);
+  padding:3px 8px;border-radius:9px;transition:all .2s;}
+.lp.on{background:#fff;color:var(--primary);box-shadow:0 1px 4px rgba(0,0,0,.1);}
+.avatar{
+  width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(135deg,#5b5cf6,#8b5cf6);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:14px;font-weight:700;flex-shrink:0;
+}
+
+/* ─── SCROLL AREA ─── */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.scroll-inner{padding:14px 14px calc(100px + var(--safe-b));}
+
+/* ─── ENERGY CARD ─── */
+.energy-card{
+  background:var(--card);border-radius:var(--radius);
+  padding:18px;margin-bottom:12px;box-shadow:var(--shadow);
+}
+.card-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+.card-title{font-size:15px;font-weight:600;}
+.card-unit{font-size:12px;color:var(--muted);font-weight:500;}
+.energy-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.ecol{flex:1;text-align:center;}
+.ecol-icon{font-size:14px;color:var(--muted);margin-bottom:4px;}
+.ecol-label{font-size:11px;color:var(--muted);font-weight:500;margin-bottom:4px;}
+.ecol-val{font-size:22px;font-weight:800;letter-spacing:-.5px;}
+.ecol-val.burnt{cursor:pointer;}
+.ecol-val.burnt:active{opacity:.7;}
+
+.ring-col{flex:1.4;display:flex;justify-content:center;}
+.ring-wrap{position:relative;width:100px;height:100px;}
+.ring-wrap svg{transform:rotate(-90deg);}
+.ring-inner{position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;}
+.ring-num{font-size:22px;font-weight:900;line-height:1;letter-spacing:-.5px;}
+.ring-lbl{font-size:9px;color:var(--muted);font-weight:600;letter-spacing:.8px;
+  text-transform:uppercase;margin-top:2px;}
+
+/* ─── MACROS ─── */
+.section{padding:0 0 12px;}
+.section-hdr{display:flex;justify-content:space-between;align-items:center;
+  padding:4px 0 10px;}
+.section-title{font-size:16px;font-weight:700;}
+.section-action{font-size:13px;color:var(--primary);font-weight:600;
+  background:none;border:none;}
+.macro-cards{display:flex;gap:8px;}
+.mc{flex:1;background:var(--card);border-radius:var(--radius-sm);
+  padding:12px 10px;box-shadow:var(--shadow);}
+.mc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.mc-icon{width:26px;height:26px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-size:13px;}
+.mc-goal-val{font-size:11px;color:var(--muted);font-weight:500;}
+.mc-name{font-size:10px;color:var(--muted);margin-bottom:2px;font-weight:500;}
+.mc-val{font-size:18px;font-weight:800;margin-bottom:7px;letter-spacing:-.3px;}
+.mc-track{height:4px;background:#f0f0f0;border-radius:2px;overflow:hidden;}
+.mc-fill{height:100%;border-radius:2px;transition:width .4s;}
+
+/* ─── MEALS ─── */
+.meal-card{
+  background:var(--card);border-radius:var(--radius);
+  margin-bottom:10px;box-shadow:var(--shadow);
+  padding:14px 16px;
+}
+.meal-hdr-row{display:flex;align-items:center;gap:10px;}
+.meal-icon-wrap{
+  width:38px;height:38px;border-radius:11px;
+  background:#f8f4ff;display:flex;align-items:center;justify-content:center;
+  font-size:19px;flex-shrink:0;
+}
+.meal-info-block{flex:1;}
+.meal-name{font-size:15px;font-weight:700;}
+.meal-kcal-sub{font-size:12px;color:var(--muted);margin-top:1px;}
+.meal-add-btn{
+  width:34px;height:34px;background:var(--nav);border:none;
+  border-radius:50%;color:#fff;font-size:20px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;line-height:1;transition:opacity .15s;
+}
+.meal-add-btn:active{opacity:.7;}
+.meal-items{margin-top:4px;}
+.fi{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 0;border-top:1px solid var(--border);
+}
+.fi-l{flex:1;min-width:0;}
+.fi-name{font-size:13px;font-weight:600;}
+.fi-serving{font-size:11px;color:var(--muted);margin-top:1px;}
+.fi-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.fi-kcal{font-size:13px;font-weight:600;color:var(--text);}
+.fi-del{background:none;border:none;color:#ccc;font-size:15px;
+  padding:4px;border-radius:50%;transition:color .15s;}
+.fi-del:active{color:var(--danger);}
+.meal-empty{text-align:center;color:var(--muted);font-size:13px;
+  padding:14px 0 4px;font-style:italic;}
+
+/* ─── HISTORY ─── */
+.hist-card{
+  background:var(--card);border-radius:var(--radius);
+  margin-bottom:10px;box-shadow:var(--shadow);
+  overflow:hidden;cursor:pointer;
+}
+.hist-inner{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 8px;}
+.hist-d{font-size:14px;font-weight:700;}
+.hist-m{font-size:11px;color:var(--muted);margin-top:2px;}
+.hist-right{text-align:right;}
+.hist-k{font-size:16px;font-weight:800;}
+.hist-diff{font-size:11px;color:var(--muted);}
+.hist-bar{height:4px;background:#f0f0f0;margin:0 16px 12px;border-radius:2px;overflow:hidden;}
+.hist-fill{height:100%;border-radius:2px;}
+.no-data{text-align:center;padding:60px 20px;color:var(--muted);font-size:14px;line-height:2;}
+
+/* ─── TEMPLATES ─── */
+.tpl-card{background:var(--card);border-radius:var(--radius);margin-bottom:10px;
+  box-shadow:var(--shadow);overflow:hidden;}
+.tpl-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 12px;}
+.tpl-title{font-size:15px;font-weight:700;}
+.tpl-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.tpl-btns{display:flex;gap:6px;align-items:center;}
+.tpl-del-btn{background:none;border:none;color:var(--muted);font-size:20px;padding:2px 4px;}
+.tpl-del-btn:active{color:var(--danger);}
+.tpl-use-btn{background:var(--success);color:#fff;border:none;
+  border-radius:20px;padding:7px 14px;font-size:12px;font-weight:700;}
+.tpl-expanded{border-top:1px solid var(--border);}
+.tpl-items-list{padding:8px 16px 4px;font-size:12px;color:var(--muted);}
+.tpl-meals-sel{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px 14px;}
+.tpl-m-btn{flex:1;min-width:calc(50% - 4px);background:#f8f8ff;color:var(--primary);
+  border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:700;text-align:center;}
+.tpl-m-btn:active{background:var(--primary);color:#fff;}
+.add-meal-lbl{padding:4px 16px 2px;font-size:11px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.5px;}
+
+/* ─── BOTTOM NAV ─── */
+.bottom-nav{
+  position:fixed;bottom:calc(20px + var(--safe-b));left:50%;
+  transform:translateX(-50%);
+  background:var(--nav);border-radius:40px;
+  padding:8px 10px;
+  display:flex;align-items:center;gap:2px;
+  box-shadow:0 8px 32px rgba(0,0,0,.22);
+  z-index:50;
+}
+.ni{
+  background:none;border:none;color:rgba(255,255,255,.45);
+  padding:8px 12px;border-radius:24px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s;
+}
+.ni.on{color:#fff;background:rgba(255,255,255,.15);}
+.ni:active{opacity:.7;}
+.ni-center{
+  width:46px;height:46px;border-radius:50%;
+  background:rgba(255,255,255,.15);
+  border:none;color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 2px;
+}
+.ni-center:active{background:rgba(255,255,255,.3);}
+/* NAV SVG icons */
+.ni svg{width:20px;height:20px;stroke:currentColor;stroke-width:2;
+  fill:none;stroke-linecap:round;stroke-linejoin:round;}
+.ni-center svg{width:22px;height:22px;}
+
+/* ─── OVERLAY & SHEET ─── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;
+  opacity:0;pointer-events:none;transition:opacity .3s;}
+.overlay.on{opacity:1;pointer-events:auto;}
+
+.sheet{
+  position:fixed;bottom:0;left:50%;transform:translate(-50%,100%);
+  width:100%;max-width:430px;background:#fff;
+  border-radius:24px 24px 0 0;z-index:200;
+  transition:transform .32s cubic-bezier(.32,.72,0,1);
+  max-height:92vh;display:flex;flex-direction:column;
+  padding-bottom:var(--safe-b);
+}
+.sheet.on{transform:translate(-50%,0);}
+.sh-handle{width:40px;height:4px;background:#e0e0e0;border-radius:2px;margin:12px auto 0;}
+.sh-title{font-size:17px;font-weight:800;padding:14px 18px 10px;}
+
+/* search phase */
+.sh-sw{padding:0 14px 10px;}
+.sinput{
+  width:100%;border:1.5px solid #e8e8e8;border-radius:12px;
+  padding:12px 14px;font-size:15px;outline:none;
+  background:#fafafa;transition:border-color .2s;-webkit-appearance:none;
+}
+.sinput:focus{border-color:var(--primary);background:#fff;}
+.sinput::placeholder{color:#aaa;}
+.sh-sec{padding:6px 14px 4px;font-size:11px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.6px;}
+.sh-res{overflow-y:auto;flex:1;}
+.frow{display:flex;align-items:center;gap:12px;padding:11px 14px;
+  cursor:pointer;transition:background .1s;border-top:1px solid var(--border);}
+.frow:active{background:#fafafa;}
+.frow-em{font-size:22px;width:32px;text-align:center;flex-shrink:0;}
+.frow-info{flex:1;}
+.frow-name{font-size:14px;font-weight:600;}
+.frow-cal{font-size:12px;color:var(--muted);}
+.frow-arr{color:#d0d0d0;font-size:18px;}
+.no-res{padding:32px 14px;text-align:center;color:var(--muted);font-size:14px;white-space:pre-line;}
+
+/* portion phase */
+.ph-food-info{display:flex;align-items:center;gap:12px;
+  padding:0 16px 14px;border-bottom:1px solid var(--border);}
+.ph-em{font-size:32px;}
+.ph-name{font-size:16px;font-weight:800;}
+.ph-per{font-size:12px;color:var(--muted);}
+.ph-back{background:#f5f5f7;border:none;color:var(--muted);
+  border-radius:20px;padding:5px 12px;font-size:13px;font-weight:600;
+  margin-left:auto;flex-shrink:0;}
+.portion-scroll{overflow-y:auto;flex:1;padding:12px 14px 0;}
+.portion-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.pchip{
+  display:flex;align-items:center;justify-content:space-between;
+  background:#fafafa;border:1.5px solid #ebebeb;
+  border-radius:12px;padding:12px 14px;transition:all .15s;
+}
+.pchip.sel{background:#f0f0ff;border-color:var(--primary);}
+.pchip:active{background:#f0f0ff;border-color:var(--primary);}
+.pl{font-size:14px;font-weight:600;}
+.pr{font-size:13px;font-weight:800;color:var(--primary);}
+.pchip.sel .pl,.pchip.sel .pr{color:var(--primary);}
+.custom-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.custom-row label{font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap;}
+.ginput{flex:1;border:1.5px solid #ebebeb;border-radius:10px;
+  padding:10px 12px;font-size:15px;text-align:center;
+  outline:none;-webkit-appearance:none;transition:border-color .2s;}
+.ginput:focus{border-color:var(--primary);}
+.gunit{font-size:14px;font-weight:600;color:var(--muted);}
+.kcal-prev-box{
+  background:#f0f0ff;border-radius:12px;padding:12px 14px;
+  margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;
+}
+.kpb-l{font-size:12px;color:var(--primary);font-weight:600;}
+.kpb-mac{font-size:11px;color:var(--muted);margin-top:2px;}
+.kpb-kcal{font-size:24px;font-weight:900;color:var(--primary);}
+.add-confirm{
+  width:100%;background:var(--nav);color:#fff;border:none;
+  border-radius:13px;padding:15px;font-size:16px;font-weight:800;
+  margin-bottom:8px;transition:opacity .15s;
+}
+.add-confirm:active{opacity:.8;}
+
+/* ─── BURNED EDIT INLINE ─── */
+.burned-edit-wrap{display:inline-flex;align-items:center;gap:4px;}
+.burned-inp{
+  width:70px;border:none;border-bottom:2px solid var(--primary);
+  background:transparent;font-size:22px;font-weight:800;
+  text-align:center;outline:none;-webkit-appearance:none;padding:0;
+  font-family:inherit;letter-spacing:-.5px;
+}
+.burned-ok{background:var(--primary);color:#fff;border:none;
+  border-radius:8px;padding:4px 8px;font-size:12px;font-weight:700;}
+
+/* ─── SETTINGS MODAL ─── */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;
+  display:none;align-items:flex-end;justify-content:center;}
+.modal-ov.on{display:flex;}
+.modal{background:#fff;border-radius:24px 24px 0 0;
+  padding:0 20px calc(20px + var(--safe-b));
+  width:100%;max-width:430px;max-height:90vh;overflow-y:auto;}
+.modal-handle{width:40px;height:4px;background:#e0e0e0;
+  border-radius:2px;margin:12px auto 18px;}
+.modal-title{font-size:19px;font-weight:800;margin-bottom:18px;}
+.fld{margin-bottom:14px;}
+.fld label{display:block;font-size:11px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.fld input{width:100%;border:1.5px solid #e8e8e8;border-radius:10px;
+  padding:12px 14px;font-size:16px;outline:none;-webkit-appearance:none;}
+.fld input:focus{border-color:var(--primary);}
+.btn-primary{width:100%;background:var(--nav);color:#fff;border:none;
+  border-radius:12px;padding:14px;font-size:15px;font-weight:700;margin-bottom:8px;}
+.btn-secondary{width:100%;background:#f5f5f7;color:var(--text);border:none;
+  border-radius:12px;padding:14px;font-size:15px;font-weight:700;}
+
+/* ─── TOAST ─── */
+.toast{
+  position:fixed;bottom:calc(88px + var(--safe-b));left:50%;
+  transform:translateX(-50%) translateY(60px);
+  background:var(--nav);color:#fff;
+  padding:11px 20px;border-radius:30px;font-size:14px;font-weight:600;
+  box-shadow:var(--shadow-lg);z-index:500;
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;
+}
+.toast.on{transform:translateX(-50%) translateY(0);}
+
+/* ─── INSTALL BANNER ─── */
+.install-banner{
+  position:fixed;bottom:calc(80px + var(--safe-b));left:50%;
+  transform:translateX(-50%) translateY(120px);
+  width:calc(100% - 28px);max-width:402px;
+  background:var(--nav);color:#fff;
+  border-radius:18px;padding:14px 16px;
+  display:flex;align-items:center;gap:12px;
+  box-shadow:0 8px 32px rgba(0,0,0,.28);z-index:400;
+  transition:transform .4s cubic-bezier(.34,1.56,.64,1);
+}
+.install-banner.on{transform:translateX(-50%) translateY(0);}
+.install-icon{font-size:28px;flex-shrink:0;}
+.install-text{flex:1;}
+.install-title{font-size:14px;font-weight:700;margin-bottom:2px;}
+.install-sub{font-size:12px;opacity:.7;}
+.install-btn{background:#fff;color:var(--nav);border:none;
+  border-radius:10px;padding:8px 14px;font-size:13px;font-weight:800;
+  flex-shrink:0;transition:opacity .15s;}
+.install-btn:active{opacity:.8;}
+.install-dismiss{background:none;border:none;color:rgba(255,255,255,.5);
+  font-size:20px;padding:2px 4px;flex-shrink:0;line-height:1;}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="date-area">
+    <div class="date-small" id="today-lbl">Today</div>
+    <div class="date-nav">
+      <button class="dnav" onclick="chDate(-1)">‹</button>
+      <span class="date-name" id="date-name"></span>
+      <button class="dnav" onclick="chDate(1)">›</button>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="lang-pill">
+      <button class="lp" id="lp-sk" onclick="setLang('sk')">SK</button>
+      <button class="lp" id="lp-en" onclick="setLang('en')">EN</button>
+    </div>
+    <div class="avatar">K</div>
+  </div>
+</div>
+
+<!-- MAIN SCROLL -->
+<div class="scroll">
+  <div class="scroll-inner">
+    <!-- TODAY TAB -->
+    <div id="tab0">
+      <!-- Energy Balance card — rendered by JS -->
+      <div id="energy-card-wrap"></div>
+      <!-- Macros — rendered by JS -->
+      <div id="macros-wrap"></div>
+      <!-- Meals section -->
+      <div class="section">
+        <div class="section-hdr">
+          <span class="section-title" id="meals-lbl">Meals</span>
+        </div>
+        <div id="meals-wrap"></div>
+      </div>
+    </div>
+
+    <!-- HISTORY TAB -->
+    <div id="tab1" style="display:none">
+      <div id="history-wrap"></div>
+    </div>
+
+    <!-- TEMPLATES TAB -->
+    <div id="tab2" style="display:none">
+      <div id="tpl-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV PILL -->
+<nav class="bottom-nav">
+  <!-- Home -->
+  <button class="ni on" id="n0" onclick="setTab(0)">
+    <svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+  </button>
+  <!-- History -->
+  <button class="ni" id="n1" onclick="setTab(1)">
+    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+  </button>
+  <!-- Center: quick add -->
+  <button class="ni ni-center" id="n-center" onclick="quickAdd()">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+  <!-- Templates -->
+  <button class="ni" id="n2" onclick="setTab(2)">
+    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+  </button>
+  <!-- Settings -->
+  <button class="ni" id="n3" onclick="openSettings()">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7"/></svg>
+  </button>
+</nav>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="closeSheet()"></div>
+
+<!-- BOTTOM SHEET: ADD FOOD -->
+<div class="sheet" id="sheet">
+  <div class="sh-handle"></div>
+  <div class="sh-title" id="sh-title"></div>
+
+  <!-- SEARCH PHASE -->
+  <div id="ph-search" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+    <div class="sh-sw">
+      <input class="sinput" id="search-inp" type="search"
+        autocomplete="off" autocorrect="off" spellcheck="false"
+        oninput="onSearch(this.value)" inputmode="search">
+    </div>
+    <div class="sh-res" id="sh-results"></div>
+  </div>
+
+  <!-- PORTION PHASE -->
+  <div id="ph-portion" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+    <div class="ph-food-info">
+      <span class="ph-em" id="pf-em"></span>
+      <div><div class="ph-name" id="pf-name"></div><div class="ph-per" id="pf-per"></div></div>
+      <button class="ph-back" id="back-btn" onclick="backToSearch()"></button>
+    </div>
+    <div class="portion-scroll">
+      <div class="portion-list" id="portion-chips"></div>
+      <div class="custom-row">
+        <label id="custom-lbl"></label>
+        <input class="ginput" id="gram-inp" type="number" min="1" max="5000"
+          inputmode="decimal" placeholder="0" oninput="onGramInput(this.value)">
+        <span class="gunit">g</span>
+      </div>
+      <div class="kcal-prev-box" id="kcal-prev">
+        <div><div class="kpb-l" id="prev-lbl"></div><div class="kpb-mac" id="prev-mac"></div></div>
+        <div class="kpb-kcal" id="prev-kcal">—</div>
+      </div>
+      <button class="add-confirm" id="add-confirm-btn" onclick="confirmAdd()"></button>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK ADD MEAL SELECTOR (bottom sheet variant) -->
+<div class="sheet" id="quick-sheet" style="max-height:50vh;">
+  <div class="sh-handle"></div>
+  <div class="sh-title" id="qs-title">Add to meal</div>
+  <div id="qs-meals" style="padding:0 14px 20px;display:flex;flex-direction:column;gap:8px;"></div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-ov" id="modal-ov" onclick="closeMOv(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-title"></div>
+    <div class="fld"><label id="sl-k"></label><input type="number" id="s-k" inputmode="numeric"></div>
+    <div class="fld"><label id="sl-p"></label><input type="number" id="s-p" inputmode="numeric"></div>
+    <div class="fld"><label id="sl-c"></label><input type="number" id="s-c" inputmode="numeric"></div>
+    <div class="fld"><label id="sl-f"></label><input type="number" id="s-f" inputmode="numeric"></div>
+    <button class="btn-primary" id="modal-save" onclick="saveSettings()"></button>
+    <button class="btn-secondary" id="modal-cancel" onclick="closeModal()"></button>
+  </div>
+</div>
+
+<!-- INSTALL BANNER (Android/Chrome) -->
+<div class="install-banner" id="install-banner">
+  <div class="install-icon">📲</div>
+  <div class="install-text">
+    <div class="install-title" id="ib-title">Nainštalovať aplikáciu</div>
+    <div class="install-sub" id="ib-sub">Pridať na plochu · Funguje offline</div>
+  </div>
+  <button class="install-btn" id="ib-btn" onclick="doInstall()">Inštalovať</button>
+  <button class="install-dismiss" onclick="dismissInstall()">✕</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// TRANSLATIONS
+// ═══════════════════════════════════════════════════════════
+const TR = {
+  sk:{
+    today:'Dnes',
+    tabs:['Dnes','História','Šablóny'],
+    meals:{b:'Raňajky',l:'Obed',d:'Večera',s:'Snack'},
+    memoji:{b:'🌅',l:'☀️',d:'🌙',s:'🍎'},
+    mealsLbl:'Jedlá', macrosLbl:'Makrá',
+    energyTitle:'Energetická bilancia',
+    eaten:'Zjedené', burned:'Spálené', left:'ZOSTATOK',
+    goal:'Cieľ', remaining:'Zostatok', consumed:'Zjedené',
+    protein:'Bielkoviny', carbs:'Sacharidy', fat:'Tuky',
+    add:'+ Pridať', save:'⭐ Uložiť', use:'Použiť →',
+    addTo:'Pridať do:', back:'← Späť',
+    searchPh:'Hľadaj jedlo…',
+    recent:'⏱ Nedávne', results:'Výsledky',
+    noResults:'Nič sa nenašlo.\nSkús iný výraz.',
+    noSearch:'Hľadaj jedlo podľa názvu 🔍',
+    emptyMeal:'Zatiaľ nič pridané',
+    customLbl:'Vlastné:', addBtn:'✓ Pridať do jedla',
+    perGram:'/ 100g', prevLbl:'Výber', prevMac:'Vyber porciu',
+    over:'nad cieľom', under:'pod cieľom',
+    today_lbl:'Dnes', yesterday:'Včera', tomorrow:'Zajtra',
+    days:['nedeľa','pondelok','utorok','streda','štvrtok','piatok','sobota'],
+    months:['jan','feb','mar','apr','máj','jún','júl','aug','sep','okt','nov','dec'],
+    items:'položiek', addToMeal:'Pridať do jedla:',
+    settings:'Nastavenia',
+    sLabels:['Kalórie (kcal)','Bielkoviny (g)','Sacharidy (g)','Tuky (g)'],
+    saveLbl:'Uložiť', cancelLbl:'Zrušiť',
+    choosePortion:'Vyber porciu!',
+    noHistory:'Zatiaľ žiadna história.\nZačni zaznamenávať jedlá!',
+    noTpl:'Zatiaľ žiadne šablóny.\nUlož si typické jedlo kliknutím\nna ⭐ Uložiť v karte jedla.',
+    tSaved:n=>`⭐ "${n}" uložené`,
+    tAdded:(em,n,g)=>`✓ ${em} ${n} (${g}g) pridané`,
+    tSettSaved:'✓ Ciele uložené',
+    tTplDel:'Šablóna vymazaná',
+    tTplApplied:m=>`✓ Šablóna pridaná do ${m}`,
+    burnedHint:'Klepni na spálené kcal pre úpravu',
+    edit:'Upraviť',
+  },
+  en:{
+    today:'Today',
+    tabs:['Today','History','Templates'],
+    meals:{b:'Breakfast',l:'Lunch',d:'Dinner',s:'Snack'},
+    memoij:{b:'🌅',l:'☀️',d:'🌙',s:'🍎'},
+    memojiX:{b:'🌅',l:'☀️',d:'🌙',s:'🍎'},
+    mealsLbl:'Meals', macrosLbl:'Macros',
+    energyTitle:'Energy Balance',
+    eaten:'Eaten', burned:'Burned', left:'LEFT',
+    goal:'Goal', remaining:'Remaining', consumed:'Consumed',
+    protein:'Protein', carbs:'Carbs', fat:'Fat',
+    add:'+ Add', save:'⭐ Save', use:'Use →',
+    addTo:'Add to:', back:'← Back',
+    searchPh:'Search food…',
+    recent:'⏱ Recent', results:'Results',
+    noResults:'Nothing found.\nTry a different term.',
+    noSearch:'Search for food by name 🔍',
+    emptyMeal:'No items added yet',
+    customLbl:'Custom:', addBtn:'✓ Add to meal',
+    perGram:'/ 100g', prevLbl:'Selection', prevMac:'Choose a portion',
+    over:'above goal', under:'below goal',
+    today_lbl:'Today', yesterday:'Yesterday', tomorrow:'Tomorrow',
+    days:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
+    months:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    items:'items', addToMeal:'Add to meal:',
+    settings:'Settings',
+    sLabels:['Calories (kcal)','Protein (g)','Carbs (g)','Fat (g)'],
+    saveLbl:'Save', cancelLbl:'Cancel',
+    choosePortion:'Choose a portion!',
+    noHistory:'No history yet.\nStart logging your meals!',
+    noTpl:'No templates yet.\nSave a typical meal by tapping\n⭐ Save on a meal card.',
+    tSaved:n=>`⭐ "${n}" saved`,
+    tAdded:(em,n,g)=>`✓ ${em} ${n} (${g}g) added`,
+    tSettSaved:'✓ Goals saved',
+    tTplDel:'Template deleted',
+    tTplApplied:m=>`✓ Template added to ${m}`,
+    burnedHint:'Tap burned to edit exercise calories',
+    edit:'Edit',
+  }
+};
+const MEAL_EMOJI={b:'🌅',l:'☀️',d:'🌙',s:'🍎'};
+const PORT_MAP=[
+  ['Malá porcia','Small serving'],['Stredná porcia','Medium serving'],['Veľká porcia','Large serving'],
+  ['Malá príloha','Small side'],['Malá','Small'],['Malý','Small'],['Malé','Small'],
+  ['Stredná','Medium'],['Stredný','Medium'],['Stredné','Medium'],
+  ['Veľká','Large'],['Veľký','Large'],['Veľké','Large'],
+  ['porcia','serving'],['Porcia','Serving'],['príloha','side'],
+  ['plátok','slice'],['plátky','slices'],[' ks',' pc'],
+  ['pohár','glass'],['šálka','cup'],['lyžica','tbsp'],['lyžice','tbsp'],
+  ['lyžičky','tsp'],['odmerka','scoop'],['odmerky','scoops'],
+  ['hrsť','handful'],['hrsti','handfuls'],['hlava','head'],
+  ['konzerva','can'],['kúsky','pcs'],['tabuľky','bar'],
+  ['balenie','pack'],['bal.','pkg.'],['krajec','slice'],
+];
+function tport(s){
+  if(LANG==='sk') return s;
+  let r=s;
+  for(const[a,b]of PORT_MAP) r=r.replace(new RegExp(a,'g'),b);
+  return r;
+}
+const t=()=>TR[LANG];
+
+// ═══════════════════════════════════════════════════════════
+// FOOD DATABASE (USDA values per 100g)
+// ═══════════════════════════════════════════════════════════
+const DB=[
+{id:'egg',name:'Vajce / Egg',emoji:'🥚',kw:['vajce','vajcia','vajko','egg','eggs'],kcal:143,p:12.6,c:0.7,f:9.5,portions:[{l:'1 malé (50g)',g:50},{l:'1 stredné (60g)',g:60},{l:'1 veľké (70g)',g:70},{l:'2 ks (120g)',g:120},{l:'3 ks (180g)',g:180}]},
+{id:'milk_full',name:'Mlieko 3,5% / Whole Milk',emoji:'🥛',kw:['mlieko','milk','whole milk'],kcal:60,p:3.2,c:4.8,f:3.5,portions:[{l:'½ pohár (125ml)',g:125},{l:'1 pohár (250ml)',g:250},{l:'1 šálka (200ml)',g:200}]},
+{id:'yogurt_greek',name:'Grécky jogurt / Greek Yogurt',emoji:'🍶',kw:['grecky jogurt','greek yogurt','skyr','grécky'],kcal:97,p:9.0,c:3.6,f:5.0,portions:[{l:'100g',g:100},{l:'150g',g:150},{l:'200g',g:200},{l:'250g',g:250}]},
+{id:'yogurt',name:'Jogurt / Yogurt',emoji:'🍶',kw:['jogurt','yogurt','plain yogurt'],kcal:56,p:4.0,c:6.5,f:1.5,portions:[{l:'1 balenie (125g)',g:125},{l:'1 balenie (150g)',g:150},{l:'1 balenie (200g)',g:200}]},
+{id:'quark',name:'Tvaroh / Quark',emoji:'🧀',kw:['tvaroh','quark','cottage cheese'],kcal:98,p:11.1,c:3.4,f:4.3,portions:[{l:'100g',g:100},{l:'150g',g:150},{l:'200g',g:200},{l:'250g',g:250}]},
+{id:'cheese',name:'Syr / Cheese',emoji:'🧀',kw:['syr','cheese','eidam','gouda','cheddar'],kcal:356,p:25.2,c:1.3,f:28.1,portions:[{l:'1 plátok (20g)',g:20},{l:'2 plátky (40g)',g:40},{l:'50g',g:50}]},
+{id:'butter',name:'Maslo / Butter',emoji:'🧈',kw:['maslo','butter'],kcal:717,p:0.9,c:0.1,f:80.8,portions:[{l:'1 lyžičky (5g)',g:5},{l:'1 lyžica (15g)',g:15}]},
+{id:'whey',name:'Proteín / Whey Protein',emoji:'💪',kw:['protein','proteín','whey','protein powder','protein shake'],kcal:385,p:80.0,c:6.0,f:5.0,portions:[{l:'1 odmerka (25g)',g:25},{l:'1 odmerka (30g)',g:30},{l:'2 odmerky (60g)',g:60}]},
+{id:'chicken_breast',name:'Kuracie prsia / Chicken Breast',emoji:'🍗',kw:['kuracie prsia','kuraci prsia','chicken breast','kuracina','kurca','chicken'],kcal:165,p:31.0,c:0.0,f:3.6,portions:[{l:'Malá porcia (100g)',g:100},{l:'Stredná porcia (150g)',g:150},{l:'Veľká porcia (200g)',g:200},{l:'XL (250g)',g:250}]},
+{id:'chicken_thigh',name:'Kuracie stehno / Chicken Thigh',emoji:'🍗',kw:['kuracie stehno','stehno','chicken thigh','chicken leg'],kcal:209,p:26.1,c:0.0,f:10.9,portions:[{l:'1 ks (120g)',g:120},{l:'2 ks (240g)',g:240}]},
+{id:'beef',name:'Hovädzie / Beef',emoji:'🥩',kw:['hovadzie','hovaedzina','beef','steak','ribeye'],kcal:217,p:26.1,c:0.0,f:12.0,portions:[{l:'100g',g:100},{l:'150g',g:150},{l:'200g',g:200}]},
+{id:'pork',name:'Bravčové / Pork',emoji:'🥩',kw:['bravce','bravčové','pork','kotlet','rezeň'],kcal:242,p:27.3,c:0.0,f:14.2,portions:[{l:'100g',g:100},{l:'150g',g:150},{l:'200g',g:200}]},
+{id:'ham',name:'Šunka / Ham',emoji:'🥩',kw:['sunka','šunka','ham'],kcal:145,p:20.9,c:1.5,f:5.9,portions:[{l:'2 plátky (40g)',g:40},{l:'4 plátky (80g)',g:80},{l:'100g',g:100}]},
+{id:'salami',name:'Salám / Salami',emoji:'🌭',kw:['salam','salami','klobasa','párok','sausage'],kcal:348,p:14.8,c:1.8,f:31.6,portions:[{l:'1 plátok (15g)',g:15},{l:'3 plátky (45g)',g:45},{l:'100g',g:100}]},
+{id:'salmon',name:'Losos / Salmon',emoji:'🐟',kw:['losos','salmon'],kcal:208,p:20.4,c:0.0,f:13.4,portions:[{l:'Malá porcia (100g)',g:100},{l:'Stredná porcia (150g)',g:150},{l:'Veľká porcia (200g)',g:200}]},
+{id:'tuna',name:'Tuniak / Tuna',emoji:'🐟',kw:['tuniak','tuna','tunak','canned tuna'],kcal:116,p:26.0,c:0.0,f:0.9,portions:[{l:'½ konzerva (80g)',g:80},{l:'1 konzerva (160g)',g:160}]},
+{id:'cod',name:'Treska / Cod',emoji:'🐠',kw:['treska','cod','ryba','fish','white fish'],kcal:82,p:17.8,c:0.0,f:0.7,portions:[{l:'100g',g:100},{l:'150g',g:150},{l:'200g',g:200}]},
+{id:'oats',name:'Ovsené vločky / Oats',emoji:'🥣',kw:['ovsene vlocky','ovsena kasa','oatmeal','oats','ovos','porridge'],kcal:389,p:16.9,c:66.3,f:6.9,portions:[{l:'Malá porcia (50g)',g:50},{l:'Stredná porcia (80g)',g:80},{l:'Veľká porcia (100g)',g:100}]},
+{id:'rice',name:'Ryža / Rice (cooked)',emoji:'🍚',kw:['ryza','rice','varena ryza','cooked rice'],kcal:130,p:2.7,c:28.2,f:0.3,portions:[{l:'Malá príloha (100g)',g:100},{l:'Stredná príloha (150g)',g:150},{l:'Veľká príloha (200g)',g:200},{l:'XL (250g)',g:250}]},
+{id:'pasta',name:'Cestoviny / Pasta (cooked)',emoji:'🍝',kw:['cestoviny','pasta','spagety','spaghetti','penne','noodles'],kcal:131,p:5.0,c:25.2,f:1.1,portions:[{l:'Malá porcia (120g)',g:120},{l:'Stredná porcia (180g)',g:180},{l:'Veľká porcia (240g)',g:240}]},
+{id:'bread_wg',name:'Celozrnný chlieb / Wholegrain Bread',emoji:'🍞',kw:['celozrnny chlieb','whole grain bread','tmavý chlieb','wholemeal'],kcal:247,p:10.7,c:41.3,f:4.2,portions:[{l:'1 plátok (35g)',g:35},{l:'2 plátky (70g)',g:70},{l:'3 plátky (105g)',g:105}]},
+{id:'bread',name:'Chlieb / White Bread',emoji:'🍞',kw:['chlieb','bread','biely chlieb','toast'],kcal:265,p:9.0,c:49.0,f:3.2,portions:[{l:'1 plátok (30g)',g:30},{l:'2 plátky (60g)',g:60}]},
+{id:'rohlik',name:'Rožok / Roll',emoji:'🥖',kw:['rozok','rohlík','rohlik','bread roll','baguette'],kcal:279,p:9.2,c:55.4,f:2.8,portions:[{l:'1 malý (50g)',g:50},{l:'1 stredný (70g)',g:70},{l:'1 veľký (100g)',g:100}]},
+{id:'tortilla',name:'Tortilla / Wrap',emoji:'🫓',kw:['tortilla','wrap'],kcal:310,p:8.3,c:52.1,f:7.2,portions:[{l:'1 malá (45g)',g:45},{l:'1 stredná (60g)',g:60},{l:'1 veľká (75g)',g:75}]},
+{id:'quinoa',name:'Quinoa (cooked)',emoji:'🌾',kw:['quinoa'],kcal:120,p:4.4,c:21.3,f:1.9,portions:[{l:'Malá porcia (100g)',g:100},{l:'Stredná porcia (150g)',g:150},{l:'Veľká porcia (200g)',g:200}]},
+{id:'rice_cake',name:'Ryžový chlebík / Rice Cake',emoji:'🫙',kw:['ryzovy chlebik','rice cake'],kcal:387,p:7.3,c:81.5,f:2.4,portions:[{l:'1 ks (10g)',g:10},{l:'2 ks (20g)',g:20},{l:'3 ks (30g)',g:30}]},
+{id:'broccoli',name:'Brokolica / Broccoli',emoji:'🥦',kw:['brokolica','broccoli'],kcal:34,p:2.8,c:6.6,f:0.4,portions:[{l:'½ hlava (150g)',g:150},{l:'1 hlava (300g)',g:300},{l:'100g',g:100}]},
+{id:'spinach',name:'Špenát / Spinach',emoji:'🌿',kw:['spenát','spinach'],kcal:23,p:2.9,c:3.6,f:0.4,portions:[{l:'1 hrsť (50g)',g:50},{l:'100g',g:100},{l:'150g',g:150}]},
+{id:'tomato',name:'Paradajky / Tomatoes',emoji:'🍅',kw:['paradajky','paradajka','tomato'],kcal:18,p:0.9,c:3.9,f:0.2,portions:[{l:'1 ks (120g)',g:120},{l:'2 ks (240g)',g:240}]},
+{id:'cucumber',name:'Uhorka / Cucumber',emoji:'🥒',kw:['uhorka','cucumber'],kcal:16,p:0.7,c:4.0,f:0.1,portions:[{l:'½ ks (100g)',g:100},{l:'1 ks (200g)',g:200}]},
+{id:'carrot',name:'Mrkva / Carrot',emoji:'🥕',kw:['mrkva','carrot'],kcal:41,p:0.9,c:9.6,f:0.2,portions:[{l:'1 malá (60g)',g:60},{l:'1 stredná (80g)',g:80},{l:'2 ks (160g)',g:160}]},
+{id:'pepper',name:'Paprika / Bell Pepper',emoji:'🫑',kw:['paprika','bell pepper'],kcal:31,p:1.0,c:6.0,f:0.3,portions:[{l:'½ ks (75g)',g:75},{l:'1 ks (150g)',g:150}]},
+{id:'potato',name:'Zemiaky / Potatoes',emoji:'🥔',kw:['zemiaky','zemiak','potato'],kcal:77,p:2.0,c:17.5,f:0.1,portions:[{l:'1 stredný (150g)',g:150},{l:'2 stredné (300g)',g:300}]},
+{id:'sweet_potato',name:'Batáty / Sweet Potato',emoji:'🍠',kw:['bataty','batat','sweet potato'],kcal:86,p:1.6,c:20.1,f:0.1,portions:[{l:'1 ks (150g)',g:150},{l:'1 ks (200g)',g:200}]},
+{id:'avocado',name:'Avokádo / Avocado',emoji:'🥑',kw:['avokado','avocado'],kcal:160,p:2.0,c:8.5,f:14.7,portions:[{l:'½ ks (75g)',g:75},{l:'1 ks (150g)',g:150}]},
+{id:'asparagus',name:'Špargľa / Asparagus',emoji:'🌿',kw:['spargl','asparagus'],kcal:20,p:2.2,c:3.7,f:0.1,portions:[{l:'1 šálka (134g)',g:134},{l:'150g',g:150}]},
+{id:'apple',name:'Jablko / Apple',emoji:'🍎',kw:['jablko','apple'],kcal:52,p:0.3,c:13.8,f:0.2,portions:[{l:'1 malé (130g)',g:130},{l:'1 stredné (170g)',g:170},{l:'1 veľké (220g)',g:220}]},
+{id:'banana',name:'Banán / Banana',emoji:'🍌',kw:['banan','banana'],kcal:89,p:1.1,c:22.8,f:0.3,portions:[{l:'1 malý (100g)',g:100},{l:'1 stredný (130g)',g:130},{l:'1 veľký (160g)',g:160}]},
+{id:'orange',name:'Pomaranč / Orange',emoji:'🍊',kw:['pomaranc','orange'],kcal:47,p:0.9,c:11.8,f:0.1,portions:[{l:'1 ks (180g)',g:180}]},
+{id:'strawberry',name:'Jahody / Strawberries',emoji:'🍓',kw:['jahody','jahoda','strawberry'],kcal:32,p:0.7,c:7.7,f:0.3,portions:[{l:'Malá porcia (100g)',g:100},{l:'Stredná porcia (150g)',g:150},{l:'Veľká porcia (200g)',g:200}]},
+{id:'blueberry',name:'Čučoriedky / Blueberries',emoji:'🫐',kw:['cucoriedky','blueberries','blueberry'],kcal:57,p:0.7,c:14.5,f:0.3,portions:[{l:'Malá hrsť (60g)',g:60},{l:'Veľká hrsť (100g)',g:100}]},
+{id:'mango',name:'Mango',emoji:'🥭',kw:['mango'],kcal:60,p:0.8,c:15.0,f:0.4,portions:[{l:'½ ks (150g)',g:150},{l:'1 ks (300g)',g:300}]},
+{id:'kiwi',name:'Kiwi',emoji:'🥝',kw:['kiwi'],kcal:61,p:1.1,c:14.7,f:0.5,portions:[{l:'1 ks (75g)',g:75},{l:'2 ks (150g)',g:150}]},
+{id:'almonds',name:'Mandle / Almonds',emoji:'🌰',kw:['mandle','almonds'],kcal:579,p:21.2,c:21.7,f:49.9,portions:[{l:'Malá hrsť (20g)',g:20},{l:'Stredná hrsť (30g)',g:30}]},
+{id:'walnuts',name:'Orechy / Walnuts',emoji:'🌰',kw:['orechy','walnuts','vlasske orechy'],kcal:654,p:15.2,c:13.7,f:65.2,portions:[{l:'Malá hrsť (20g)',g:20},{l:'Stredná hrsť (30g)',g:30}]},
+{id:'peanuts',name:'Arašidy / Peanuts',emoji:'🥜',kw:['arasidy','peanuts'],kcal:567,p:25.8,c:16.1,f:49.2,portions:[{l:'Malá hrsť (25g)',g:25},{l:'Stredná hrsť (40g)',g:40}]},
+{id:'pb',name:'Arašidové maslo / Peanut Butter',emoji:'🥜',kw:['arasidove maslo','peanut butter','pb'],kcal:598,p:24.7,c:20.3,f:51.0,portions:[{l:'1 lyžičky (10g)',g:10},{l:'1 lyžica (20g)',g:20},{l:'2 lyžice (40g)',g:40}]},
+{id:'chia',name:'Chia semienka / Chia Seeds',emoji:'🌱',kw:['chia','chia seeds'],kcal:486,p:16.5,c:42.1,f:30.7,portions:[{l:'1 lyžica (15g)',g:15},{l:'2 lyžice (30g)',g:30}]},
+{id:'olive_oil',name:'Olivový olej / Olive Oil',emoji:'🫒',kw:['olivovy olej','olive oil','olej','oil'],kcal:884,p:0.0,c:0.0,f:100.0,portions:[{l:'1 lyžičky (5g)',g:5},{l:'1 lyžica (13g)',g:13}]},
+{id:'coffee_black',name:'Káva čierna / Black Coffee',emoji:'☕',kw:['kava','coffee','espresso','americano','kafe'],kcal:2,p:0.3,c:0.0,f:0.0,portions:[{l:'1 espresso (30ml)',g:30},{l:'1 šálka (200ml)',g:200},{l:'1 americano (250ml)',g:250}]},
+{id:'coffee_latte',name:'Latte / Cappuccino',emoji:'🍵',kw:['latte','cappuccino','flat white','biela kava'],kcal:58,p:2.9,c:5.8,f:2.4,portions:[{l:'Malé (200ml)',g:200},{l:'Stredné (300ml)',g:300},{l:'Veľké (450ml)',g:450}]},
+{id:'juice',name:'Džús / Juice',emoji:'🍊',kw:['dzus','juice','orange juice'],kcal:45,p:0.7,c:10.4,f:0.2,portions:[{l:'Pohár (250ml)',g:250}]},
+{id:'chocolate',name:'Čokoláda / Dark Chocolate',emoji:'🍫',kw:['cokolada','chocolate','dark chocolate'],kcal:546,p:4.9,c:59.4,f:31.3,portions:[{l:'2 kúsky (10g)',g:10},{l:'¼ tabuľky (25g)',g:25},{l:'½ tabuľky (50g)',g:50}]},
+{id:'hummus',name:'Hummus',emoji:'🫙',kw:['hummus'],kcal:166,p:7.9,c:14.3,f:9.6,portions:[{l:'2 lyžice (50g)',g:50},{l:'100g',g:100}]},
+{id:'granola',name:'Granola / Müsli',emoji:'🥣',kw:['granola','musli','muesli'],kcal:451,p:10.2,c:64.8,f:17.9,portions:[{l:'Malá porcia (40g)',g:40},{l:'Stredná porcia (60g)',g:60},{l:'Veľká porcia (80g)',g:80}]},
+{id:'scrambled',name:'Miešané vajcia / Scrambled Eggs',emoji:'🍳',kw:['miesane vajcia','scrambled eggs'],kcal:148,p:10.1,c:0.7,f:11.4,portions:[{l:'1 porcia (150g)',g:150},{l:'Veľká porcia (200g)',g:200}]},
+{id:'omelette',name:'Omeleta / Omelette',emoji:'🍳',kw:['omeleta','omelette','omelet'],kcal:154,p:10.6,c:1.0,f:11.8,portions:[{l:'1 porcia (150g)',g:150},{l:'Veľká porcia (200g)',g:200}]},
+];
+
+// ═══════════════════════════════════════════════════════════
+// NORMALIZER & SEARCH
+// ═══════════════════════════════════════════════════════════
+const ND={'á':'a','ä':'a','č':'c','ď':'d','é':'e','í':'i','ĺ':'l','ľ':'l','ň':'n','ó':'o','ô':'o','ŕ':'r','š':'s','ť':'t','ú':'u','ý':'y','ž':'z'};
+const nr=s=>(s||'').toLowerCase().replace(/[áäčďéíĺľňóôŕšťúýž]/g,m=>ND[m]||m).trim();
+function searchDB(q){
+  const n=nr(q); if(!n||n.length<2) return [];
+  const r=[];
+  for(const f of DB){
+    let sc=0;
+    for(const kw of f.kw){
+      const nk=nr(kw);
+      if(nk===n){sc=200;break;}
+      if(nk.startsWith(n)) sc=Math.max(sc,150+n.length);
+      else if(nk.includes(n)) sc=Math.max(sc,100+n.length);
+      else if(n.split(' ').every(w=>w.length>=2&&nk.includes(w))) sc=Math.max(sc,70);
+    }
+    if(sc>0) r.push({food:f,sc});
+  }
+  return r.sort((a,b)=>b.sc-a.sc).map(x=>x.food).slice(0,10);
+}
+
+// ═══════════════════════════════════════════════════════════
+// STORAGE
+// ═══════════════════════════════════════════════════════════
+const SK_='cmc_s',DK='cmc_d',RK='cmc_r',TK_='cmc_t',LK='cmc_l';
+const DS_={kcal:2000,p:150,c:200,f:70};
+const gSet=()=>{try{return{...DS_,...JSON.parse(localStorage.getItem(SK_))};}catch{return{...DS_};}};
+const pSet=s=>localStorage.setItem(SK_,JSON.stringify(s));
+const gAll=()=>{try{return JSON.parse(localStorage.getItem(DK))||{};}catch{return{};}};
+const gDay=d=>{const x=gAll()[d];return x||{meals:{b:[],l:[],d:[],s:[]},burned:0};};
+const pDay=(d,day)=>{const a=gAll();a[d]=day;localStorage.setItem(DK,JSON.stringify(a));};
+const gRec=()=>{try{return JSON.parse(localStorage.getItem(RK))||[];}catch{return[];}};
+function addRec(item){const r=gRec().filter(x=>x.id!==item.id);r.unshift(item);if(r.length>10)r.pop();localStorage.setItem(RK,JSON.stringify(r));}
+const gTpl=()=>{try{return JSON.parse(localStorage.getItem(TK_))||[];}catch{return[];}};
+const pTpl=x=>localStorage.setItem(TK_,JSON.stringify(x));
+function saveTpl(name,items){const ts=gTpl();ts.unshift({id:Date.now(),name,items,created:new Date().toLocaleDateString()});pTpl(ts);}
+function delTpl(id){pTpl(gTpl().filter(x=>x.id!==id));}
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+let CUR=new Date(), TAB=0, LANG=localStorage.getItem(LK)||'sk', EXPTPL=null;
+let SH={open:false,meal:null,phase:'search',food:null,grams:null};
+let EDIT_BURNED=false;
+const MK=['b','l','d','s'];
+
+function ds(d){return d.toISOString().split('T')[0];}
+function fmtDate(d){
+  const td=new Date();td.setHours(0,0,0,0);
+  const dd=new Date(d);dd.setHours(0,0,0,0);
+  const df=Math.round((dd-td)/86400000);
+  if(df===0) return t().today_lbl;
+  if(df===-1) return t().yesterday;
+  if(df===1) return t().tomorrow;
+  return `${t().days[d.getDay()]} ${d.getDate()}. ${t().months[d.getMonth()]}`;
+}
+function tot(items){return items.reduce((a,i)=>({kcal:a.kcal+(i.kcal||0),p:a.p+(i.p||0),c:a.c+(i.c||0),f:a.f+(i.f||0)}),{kcal:0,p:0,c:0,f:0});}
+function dayTot(day){return tot([...day.meals.b,...day.meals.l,...day.meals.d,...day.meals.s]);}
+function fname(food){const pts=food.name.split(' / ');return LANG==='en'&&pts[1]?pts[1]:pts[0];}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════
+function render(){
+  // lang toggle
+  document.getElementById('lp-sk').classList.toggle('on',LANG==='sk');
+  document.getElementById('lp-en').classList.toggle('on',LANG==='en');
+  document.documentElement.lang=LANG;
+  document.getElementById('today-lbl').textContent=t().today;
+  document.getElementById('date-name').textContent=fmtDate(CUR);
+  // modal labels
+  document.getElementById('modal-title').textContent=t().settings;
+  document.getElementById('modal-save').textContent=t().saveLbl;
+  document.getElementById('modal-cancel').textContent=t().cancelLbl;
+  ['sl-k','sl-p','sl-c','sl-f'].forEach((id,i)=>document.getElementById(id).textContent=t().sLabels[i]);
+  // content
+  if(TAB===0) renderToday();
+  else if(TAB===1) renderHistory();
+  else renderTemplates();
+}
+
+function renderToday(){
+  const day=gDay(ds(CUR));
+  renderEnergyCard(day);
+  renderMacros(day);
+  renderMeals(day);
+}
+
+function renderEnergyCard(day){
+  const s=gSet(),tt=dayTot(day);
+  const burned=day.burned||0;
+  const left=Math.max(0, s.kcal - tt.kcal + burned);
+  const total_budget=s.kcal+burned;
+  const pct=Math.min(tt.kcal/total_budget*100,100);
+  const over=tt.kcal>total_budget;
+  const C=2*Math.PI*44, col=over?'#ef4444':'#1c1c2e';
+  const dashOff=C-(pct/100)*C;
+
+  document.getElementById('energy-card-wrap').innerHTML=`
+    <div class="energy-card">
+      <div class="card-hdr">
+        <span class="card-title">${t().energyTitle}</span>
+        <span class="card-unit">kcal</span>
+      </div>
+      <div class="energy-row">
+        <div class="ecol">
+          <div class="ecol-icon">🍽</div>
+          <div class="ecol-label">${t().eaten}</div>
+          <div class="ecol-val">${Math.round(tt.kcal)}</div>
+        </div>
+        <div class="ring-col">
+          <div class="ring-wrap">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="44" fill="none" stroke="#f0f0f0" stroke-width="8"/>
+              <circle cx="50" cy="50" r="44" fill="none" stroke="${col}" stroke-width="8"
+                stroke-dasharray="${C}" stroke-dashoffset="${dashOff}"
+                stroke-linecap="round"
+                style="transition:stroke-dashoffset .6s"/>
+            </svg>
+            <div class="ring-inner">
+              <div class="ring-num" style="color:${col}">${Math.round(left)}</div>
+              <div class="ring-lbl">${t().left}</div>
+            </div>
+          </div>
+        </div>
+        <div class="ecol">
+          <div class="ecol-icon">🔥</div>
+          <div class="ecol-label">${t().burned}</div>
+          ${EDIT_BURNED
+            ? `<div class="burned-edit-wrap">
+                <input class="burned-inp" id="burned-inp" type="number" value="${burned}"
+                  inputmode="numeric" min="0" max="3000" oninput="previewBurned(this.value)">
+                <button class="burned-ok" onclick="saveBurned()">OK</button>
+               </div>`
+            : `<div class="ecol-val burnt" onclick="startEditBurned()" title="${t().burnedHint}">${burned}</div>`
+          }
+        </div>
+      </div>
+    </div>`;
+  if(EDIT_BURNED) setTimeout(()=>{const i=document.getElementById('burned-inp');if(i){i.focus();i.select();}},30);
+}
+
+function renderMacros(day){
+  const s=gSet(),tt=dayTot(day);
+  const pp=Math.min(tt.p/s.p*100,100);
+  const cp=Math.min(tt.c/s.c*100,100);
+  const fp=Math.min(tt.f/s.f*100,100);
+  document.getElementById('macros-wrap').innerHTML=`
+    <div class="section">
+      <div class="section-hdr">
+        <span class="section-title">${t().macrosLbl}</span>
+      </div>
+      <div class="macro-cards">
+        <div class="mc">
+          <div class="mc-top">
+            <div class="mc-icon" style="background:var(--pc-bg)">💜</div>
+            <span class="mc-goal-val">${s.p}g</span>
+          </div>
+          <div class="mc-name">${t().protein}</div>
+          <div class="mc-val" style="color:var(--pc)">${Math.round(tt.p)}g</div>
+          <div class="mc-track"><div class="mc-fill" style="width:${pp}%;background:var(--pc)"></div></div>
+        </div>
+        <div class="mc">
+          <div class="mc-top">
+            <div class="mc-icon" style="background:var(--cc-bg)">🟠</div>
+            <span class="mc-goal-val">${s.c}g</span>
+          </div>
+          <div class="mc-name">${t().carbs}</div>
+          <div class="mc-val" style="color:var(--cc)">${Math.round(tt.c)}g</div>
+          <div class="mc-track"><div class="mc-fill" style="width:${cp}%;background:var(--cc)"></div></div>
+        </div>
+        <div class="mc">
+          <div class="mc-top">
+            <div class="mc-icon" style="background:var(--fc-bg)">❤️</div>
+            <span class="mc-goal-val">${s.f}g</span>
+          </div>
+          <div class="mc-name">${t().fat}</div>
+          <div class="mc-val" style="color:var(--fc)">${Math.round(tt.f)}g</div>
+          <div class="mc-track"><div class="mc-fill" style="width:${fp}%;background:var(--fc)"></div></div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderMeals(day){
+  document.getElementById('meals-lbl').textContent=t().mealsLbl;
+  document.getElementById('meals-wrap').innerHTML=MK.map(k=>{
+    const items=day.meals[k]||[], tt=tot(items);
+    return `<div class="meal-card">
+      <div class="meal-hdr-row">
+        <div class="meal-icon-wrap">${MEAL_EMOJI[k]}</div>
+        <div class="meal-info-block">
+          <div class="meal-name">${t().meals[k]}</div>
+          <div class="meal-kcal-sub">${items.length ? Math.round(tt.kcal)+' kcal' : '0 kcal'}</div>
+        </div>
+        <button class="meal-add-btn" onclick="openSheet('${k}')">+</button>
+      </div>
+      <div class="meal-items">
+        ${!items.length
+          ? `<div class="meal-empty">${t().emptyMeal}</div>`
+          : items.map((it,i)=>`
+            <div class="fi">
+              <div class="fi-l">
+                <div class="fi-name">${it.emoji||''} ${fname(it)}</div>
+                <div class="fi-serving">${it.portionLabelRaw?tport(it.portionLabelRaw):it.portionLabel||it.grams+'g'}</div>
+              </div>
+              <div class="fi-right">
+                <div class="fi-kcal">${it.kcal}</div>
+                <button class="fi-del" onclick="delFood('${k}',${i})">✕</button>
+              </div>
+            </div>`).join('')
+        }
+      </div>
+      ${items.length?`<div style="padding:8px 0 2px;text-align:right">
+        <button class="section-action" onclick="saveMealTpl('${k}')">${t().save}</button>
+      </div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function renderHistory(){
+  const s=gSet(),all=gAll(),days=[];
+  for(let i=0;i<30;i++){const d=new Date();d.setDate(d.getDate()-i);const key=ds(d);if(all[key]){days.push({d,key,tt:dayTot(all[key])});}}
+  if(!days.length){document.getElementById('history-wrap').innerHTML=`<div class="no-data">${t().noHistory}</div>`;return;}
+  document.getElementById('history-wrap').innerHTML=days.map(({d,key,tt})=>{
+    const pct=Math.min(tt.kcal/s.kcal*100,100),over=tt.kcal>s.kcal,diff=Math.abs(Math.round(tt.kcal-s.kcal));
+    return `<div class="hist-card" onclick="goToDate('${key}')">
+      <div class="hist-inner">
+        <div><div class="hist-d">${fmtDate(d)}</div><div class="hist-m">P:${Math.round(tt.p)}g · C:${Math.round(tt.c)}g · F:${Math.round(tt.f)}g</div></div>
+        <div class="hist-right"><div class="hist-k" style="color:${over?'var(--danger)':'var(--success)'}">${Math.round(tt.kcal)} kcal</div>
+          <div class="hist-diff">${over?'↑':'↓'} ${diff} ${over?t().over:t().under}</div></div>
+      </div>
+      <div class="hist-bar"><div class="hist-fill" style="width:${pct}%;background:${over?'var(--danger)':'var(--nav)'}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderTemplates(){
+  const tpls=gTpl();
+  if(!tpls.length){document.getElementById('tpl-wrap').innerHTML=`<div class="no-data">${t().noTpl}</div>`;return;}
+  document.getElementById('tpl-wrap').innerHTML=tpls.map(tpl=>{
+    const tt=tot(tpl.items),ex=EXPTPL===tpl.id;
+    return `<div class="tpl-card">
+      <div class="tpl-hdr">
+        <div><div class="tpl-title">${tpl.name}</div>
+          <div class="tpl-sub">${tpl.items.length} ${t().items} · ${Math.round(tt.kcal)} kcal · ${tpl.created}</div></div>
+        <div class="tpl-btns">
+          <button class="tpl-del-btn" onclick="delTplUI(${tpl.id})">🗑</button>
+          <button class="tpl-use-btn" onclick="toggleTpl(${tpl.id})">${t().use}</button>
+        </div>
+      </div>
+      ${ex?`<div class="tpl-expanded">
+        <div class="tpl-items-list">${tpl.items.map(it=>`<div style="padding:2px 0">${it.emoji||'🍴'} ${fname(it)} — ${it.portionLabelRaw?tport(it.portionLabelRaw):it.portionLabel||it.grams+'g'} (${it.kcal} kcal)</div>`).join('')}</div>
+        <div class="add-meal-lbl">${t().addToMeal}</div>
+        <div class="tpl-meals-sel">${MK.map(k=>`<button class="tpl-m-btn" onclick="applyTpl(${tpl.id},'${k}')">${MEAL_EMOJI[k]} ${t().meals[k]}</button>`).join('')}</div>
+      </div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// BURNED CALORIES EDIT
+// ═══════════════════════════════════════════════════════════
+function startEditBurned(){EDIT_BURNED=true;renderEnergyCard(gDay(ds(CUR)));}
+function previewBurned(v){/* live preview handled by re-render on save */}
+function saveBurned(){
+  const v=parseInt(document.getElementById('burned-inp').value)||0;
+  const day=gDay(ds(CUR)); day.burned=Math.max(0,v); pDay(ds(CUR),day);
+  EDIT_BURNED=false; render();
+}
+
+// ═══════════════════════════════════════════════════════════
+// SHEET
+// ═══════════════════════════════════════════════════════════
+let _deb=null;
+function renderSearch(q=''){
+  document.getElementById('ph-search').style.display='flex';
+  document.getElementById('ph-portion').style.display='none';
+  document.getElementById('search-inp').placeholder=t().searchPh;
+  const res=document.getElementById('sh-results');
+  if(!q){
+    const rec=gRec();
+    res.innerHTML=!rec.length
+      ?`<div class="no-res">${t().noSearch}</div>`
+      :`<div class="sh-sec">${t().recent}</div>`+rec.map(r=>`
+        <div class="frow" onclick="selectFood('${r.id}')">
+          <span class="frow-em">${r.emoji}</span>
+          <div class="frow-info"><div class="frow-name">${fname(r)}</div><div class="frow-cal">${r.kcal} kcal ${t().perGram}</div></div>
+          <span class="frow-arr">›</span>
+        </div>`).join('');
+  } else {
+    const foods=searchDB(q);
+    res.innerHTML=!foods.length
+      ?`<div class="no-res">${t().noResults}</div>`
+      :`<div class="sh-sec">${t().results}</div>`+foods.map(f=>`
+        <div class="frow" onclick="selectFood('${f.id}')">
+          <span class="frow-em">${f.emoji}</span>
+          <div class="frow-info"><div class="frow-name">${fname(f)}</div><div class="frow-cal">${f.kcal} kcal ${t().perGram} · P:${f.p}g C:${f.c}g F:${f.f}g</div></div>
+          <span class="frow-arr">›</span>
+        </div>`).join('');
+  }
+}
+
+function renderPortion(){
+  document.getElementById('ph-search').style.display='none';
+  document.getElementById('ph-portion').style.display='flex';
+  const f=SH.food;
+  document.getElementById('pf-em').textContent=f.emoji;
+  document.getElementById('pf-name').textContent=fname(f);
+  document.getElementById('pf-per').textContent=`${f.kcal} kcal ${t().perGram} · P:${f.p}g C:${f.c}g F:${f.f}g`;
+  document.getElementById('back-btn').textContent=t().back;
+  document.getElementById('custom-lbl').textContent=t().customLbl;
+  document.getElementById('add-confirm-btn').textContent=t().addBtn;
+  document.getElementById('gram-inp').value=SH.grams||'';
+  document.getElementById('portion-chips').innerHTML=f.portions.map(p=>`
+    <div class="pchip${SH.grams===p.g?' sel':''}" onclick="selPortion(${p.g},'${p.l.replace(/'/g,"\\'")}')">
+      <span class="pl">${tport(p.l)}</span>
+      <span class="pr">${Math.round(f.kcal*p.g/100)} kcal</span>
+    </div>`).join('');
+  if(SH.grams){
+    const r=SH.grams/100;
+    document.getElementById('prev-kcal').textContent=Math.round(f.kcal*r)+' kcal';
+    document.getElementById('prev-mac').textContent=`P:${Math.round(f.p*r*10)/10}g · C:${Math.round(f.c*r*10)/10}g · F:${Math.round(f.f*r*10)/10}g`;
+    document.getElementById('kcal-prev').style.opacity='1';
+    document.getElementById('prev-lbl').textContent=t().prevLbl;
+  } else {
+    document.getElementById('prev-kcal').textContent='—';
+    document.getElementById('prev-mac').textContent=t().prevMac;
+    document.getElementById('kcal-prev').style.opacity='.5';
+    document.getElementById('prev-lbl').textContent=t().prevLbl;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// EVENTS
+// ═══════════════════════════════════════════════════════════
+function openSheet(meal){
+  SH={open:true,meal,phase:'search',food:null,grams:null,portionLabel:null};
+  document.getElementById('sheet').classList.add('on');
+  document.getElementById('overlay').classList.add('on');
+  document.getElementById('sh-title').textContent=`${t().addTo} ${MEAL_EMOJI[meal]} ${t().meals[meal]}`;
+  const inp=document.getElementById('search-inp');
+  inp.value=''; renderSearch('');
+  setTimeout(()=>inp.focus(),80);
+}
+
+function closeSheet(){
+  SH.open=false;
+  document.getElementById('sheet').classList.remove('on');
+  document.getElementById('quick-sheet').classList.remove('on');
+  document.getElementById('overlay').classList.remove('on');
+  document.getElementById('search-inp').value='';
+}
+
+function onSearch(q){clearTimeout(_deb);_deb=setTimeout(()=>renderSearch(q),120);}
+
+function selectFood(id){
+  const f=DB.find(x=>x.id===id); if(!f) return;
+  SH.food=f; SH.grams=f.portions[1]?f.portions[1].g:f.portions[0].g;
+  SH.portionLabel=f.portions[1]?f.portions[1].l:f.portions[0].l;
+  SH.phase='portion'; renderPortion();
+}
+
+function backToSearch(){
+  SH.phase='search'; SH.food=null; SH.grams=null;
+  const inp=document.getElementById('search-inp');
+  renderSearch(inp.value||'');
+  setTimeout(()=>inp.focus(),60);
+}
+
+function selPortion(g,label){
+  SH.grams=g; SH.portionLabel=label;
+  document.getElementById('gram-inp').value=g;
+  renderPortion();
+}
+
+function onGramInput(v){
+  SH.grams=parseFloat(v)||null;
+  SH.portionLabel=v?v+'g':null;
+  renderPortion();
+}
+
+function confirmAdd(){
+  if(!SH.food||!SH.grams||SH.grams<1){toast(t().choosePortion);return;}
+  const f=SH.food,r=SH.grams/100;
+  // Store raw SK label so we can re-translate when language changes
+  const rawLabel=SH.portionLabel||null;
+  const item={
+    id:f.id, name:f.name, emoji:f.emoji,
+    grams:Math.round(SH.grams),
+    portionLabel:rawLabel?tport(rawLabel):Math.round(SH.grams)+'g',
+    portionLabelRaw:rawLabel, // always Slovak for later translation
+    kcal:Math.round(f.kcal*r),
+    p:Math.round(f.p*r*10)/10,
+    c:Math.round(f.c*r*10)/10,
+    f:Math.round(f.f*r*10)/10,
+  };
+  const d=ds(CUR),day=gDay(d);
+  day.meals[SH.meal].push(item); pDay(d,day);
+  addRec({id:f.id,name:f.name,emoji:f.emoji,kcal:f.kcal});
+  toast(t().tAdded(f.emoji,fname(f),item.grams));
+  closeSheet(); render();
+}
+
+function delFood(meal,idx){
+  const d=ds(CUR),day=gDay(d);
+  day.meals[meal].splice(idx,1); pDay(d,day); render();
+}
+
+function saveMealTpl(k){
+  const day=gDay(ds(CUR)),items=day.meals[k]; if(!items.length) return;
+  const name=`${t().meals[k]} (${new Date().toLocaleDateString()})`;
+  saveTpl(name,items); toast(t().tSaved(name)); render();
+}
+
+function toggleTpl(id){EXPTPL=EXPTPL===id?null:id;renderTemplates();}
+function delTplUI(id){delTpl(id);renderTemplates();toast(t().tTplDel);}
+function applyTpl(tplId,k){
+  const tpl=gTpl().find(x=>x.id===tplId); if(!tpl) return;
+  const d=ds(CUR),day=gDay(d);
+  tpl.items.forEach(it=>day.meals[k].push({...it})); pDay(d,day);
+  EXPTPL=null; toast(t().tTplApplied(t().meals[k])); setTab(0);
+}
+
+// Quick add — open meal selector sheet
+function quickAdd(){
+  document.getElementById('quick-sheet').classList.add('on');
+  document.getElementById('overlay').classList.add('on');
+  document.getElementById('qs-title').textContent=t().addToMeal;
+  document.getElementById('qs-meals').innerHTML=MK.map(k=>`
+    <button style="display:flex;align-items:center;gap:12px;background:#fff;border:1.5px solid #ebebeb;
+      border-radius:14px;padding:13px 16px;font-size:15px;font-weight:600;width:100%;cursor:pointer;"
+      onclick="quickAddMeal('${k}')">
+      <span style="font-size:22px">${MEAL_EMOJI[k]}</span>
+      <span>${t().meals[k]}</span>
+    </button>`).join('');
+}
+function quickAddMeal(k){
+  document.getElementById('quick-sheet').classList.remove('on');
+  document.getElementById('overlay').classList.remove('on');
+  setTimeout(()=>openSheet(k),50);
+}
+
+function chDate(d){CUR.setDate(CUR.getDate()+d);EDIT_BURNED=false;render();}
+
+function setTab(n){
+  TAB=n;
+  [0,1,2].forEach(i=>{
+    document.getElementById(`tab${i}`).style.display=i===n?'':'none';
+  });
+  // update nav
+  ['n0','n1','n2'].forEach((id,i)=>{
+    const el=document.getElementById(id);
+    if(el) el.classList.toggle('on',i===n);
+  });
+  render();
+}
+
+function goToDate(key){CUR=new Date(key+'T12:00:00');setTab(0);}
+
+function setLang(l){
+  LANG=l; localStorage.setItem(LK,l);
+  render();
+  if(SH.open){
+    document.getElementById('sh-title').textContent=`${t().addTo} ${MEAL_EMOJI[SH.meal]} ${t().meals[SH.meal]}`;
+    if(SH.phase==='search') renderSearch(document.getElementById('search-inp').value||'');
+    else renderPortion();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════════════════
+function openSettings(){
+  const s=gSet();
+  ['s-k','s-p','s-c','s-f'].forEach((id,i)=>document.getElementById(id).value=[s.kcal,s.p,s.c,s.f][i]);
+  document.getElementById('modal-ov').classList.add('on');
+}
+function closeModal(){document.getElementById('modal-ov').classList.remove('on');}
+function closeMOv(e){if(e.target.id==='modal-ov')closeModal();}
+function saveSettings(){
+  pSet({kcal:+document.getElementById('s-k').value||2000,p:+document.getElementById('s-p').value||150,
+        c:+document.getElementById('s-c').value||200,f:+document.getElementById('s-f').value||70});
+  closeModal(); render(); toast(t().tSettSaved);
+}
+
+// ═══════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════
+let _tt;
+function toast(msg){
+  const el=document.getElementById('toast');el.textContent=msg;el.classList.add('on');
+  clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('on'),2500);
+}
+
+// ─── INIT ───
+render();
+
+// ═══════════════════════════════════════════════════════════
+// PWA — SERVICE WORKER
+// ═══════════════════════════════════════════════════════════
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js')
+      .then(r=>console.log('[SW] scope:',r.scope))
+      .catch(e=>console.warn('[SW] failed:',e));
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// PWA — INSTALL BANNER
+// ═══════════════════════════════════════════════════════════
+let _deferredPrompt=null;
+const _IB=document.getElementById('install-banner');
+
+function _updateIBLang(){
+  const en=LANG==='en';
+  document.getElementById('ib-title').textContent=en?'Install App':'Nainštalovať aplikáciu';
+  document.getElementById('ib-sub').textContent=en?'Add to Home Screen · Works offline':'Pridať na plochu · Funguje offline';
+  document.getElementById('ib-btn').textContent=en?'Install':'Inštalovať';
+}
+function showInstallBanner(){if(_deferredPrompt&&_IB)_IB.classList.add('on');}
+function dismissInstall(){if(_IB)_IB.classList.remove('on');_deferredPrompt=null;}
+async function doInstall(){
+  if(!_deferredPrompt)return;
+  _deferredPrompt.prompt();
+  const{outcome}=await _deferredPrompt.userChoice;
+  if(outcome==='accepted'){dismissInstall();toast(LANG==='en'?'✓ App installed!':'✓ Aplikácia nainštalovaná!');}
+  _deferredPrompt=null;
+}
+
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();_deferredPrompt=e;
+  _updateIBLang();
+  setTimeout(showInstallBanner,2000);
+});
+
+// Patch setLang to also update install banner text
+// (use addEventListener pattern to avoid hoisting conflicts)
+window.addEventListener('langchange',_updateIBLang);
+const _setLangOrig=setLang;
+window.setLang=function(l){_setLangOrig(l);window.dispatchEvent(new Event('langchange'));};
+
+// iOS Safari hint
+const _isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+const _isStandalone=window.matchMedia('(display-mode:standalone)').matches||navigator.standalone;
+if(_isIOS&&!_isStandalone){
+  setTimeout(()=>toast(LANG==='en'?'Safari → Share → Add to Home Screen 📱':'Safari → Zdieľať → Pridať na plochu 📱'),3000);
+}
+</script>
+</body>
+</html>
